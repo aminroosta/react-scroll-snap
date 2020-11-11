@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { CSSProperties } from 'react'
 
-import { SnapY, Page } from 'react-scroll-snap'
+import { Snap, Page } from 'react-scroll-snap'
 import 'react-scroll-snap/dist/index.css'
 
 let frames = [
@@ -24,15 +24,17 @@ let frames = [
   ]
 ];
 
-const style = { paddingTop: '1em' };
-
-
-const App = () => {
-  return <SnapY>
-    <Page style={style} frames={frames[0]}>page 1</Page>
-    <Page style={style} frames={frames[1]}>page 2</Page>
-    <Page style={style} frames={frames[2]}>page 3</Page>
-    <Page style={style} frames={frames[3]}>page 4</Page>
+type Example = React.FC<{ dir: 'x' | 'y', style: CSSProperties }>;
+const Example: Example = ({ dir, style }) => {
+  const page_style = { padding: '2em' };
+  return <Snap
+    dir={dir}
+    style={style}
+  >
+    <Page style={page_style} frames={frames[0]}>1- scroll in {dir} direction</Page>
+    <Page style={page_style} frames={frames[1]}>2- scroll in {dir} direction</Page>
+    <Page style={page_style} frames={frames[2]}>3- scroll in {dir} direction</Page>
+    <Page style={page_style} frames={frames[3]}>4- scroll in {dir} direction</Page>
 
     <Page skip_snap
       style={{
@@ -43,11 +45,26 @@ const App = () => {
         left: 0,
       }}
       frames={[
-        { offset: 0, transform: 'translateX(-75%)'},
-        { offset: 1, transform: 'translateX(0)'}
+        { offset: 0, transform: 'translateX(-75%)' },
+        { offset: 1, transform: 'translateX(0)' }
       ]}
     />
-  </SnapY>
+  </Snap>
 }
 
+const App = () => (
+  <>
+    <Example dir='x' style={{
+      width: '100%',
+      height: '25vh',
+      margin: 'auto',
+    }} />
+    <Example dir='y' style={{
+      width: '90%',
+      height: '70vh',
+      margin: '1em auto',
+    }}
+    />
+  </>
+);
 export default App
