@@ -8,6 +8,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  height: 80vh;
+  width: 80vw;
+  margin: auto;
+  margin-top: 10vh;
+  background-color: aliceblue;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
