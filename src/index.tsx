@@ -6,41 +6,69 @@ const { useRef, useState, useEffect } = React;
 
 type Page = React.FC<{
   frames?: Keyframe[],
-  children: React.ReactNode
+  skip_snap?: boolean,
+  children?: React.ReactNode | undefined,
+  style?: React.CSSProperties,
+  className?: string
 }>;
 
-export const Page: Page = ({ children, frames = [] }) => {
-  return <div>{children}</div>
-}
+// @ts-ignore
+export const Page: Page = React.forwardRef(
+  ({ children, className = '', style = {} }, ref) => (
+    <div
+      // @ts-ignore
+      ref={ref}
+      style={style}
+      className={`${className} ${styles.page}`}
+    >{children}</div>
+  )
+);
 
 type SnapY = React.FC<{
-  children?: React.ReactNode,
-  keyframes?: Keyframe[]
+  children?: React.ReactElement<{
+    frames?: Keyframe[],
+    children: React.ReactNode,
+    style?: React.CSSProperties,
+    className?: string
+  }>[],
 }>;
-export const SnapY: SnapY = ({ children, keyframes = [] }) => {
+export const SnapY: SnapY = ({ children }) => {
   // @ts-ignore
   let root = useRef(null as HTMLDivElement);
-  let refs: React.MutableRefObject<HTMLElement>[] = [];
-  let count = React.Children.count(children);
+  let refs = [] as React.MutableRefObject<HTMLElement>[];
+  let props_arr = [] as any[];
 
-  let pages = React.Children.map(children, child => {
+  const pages_snapped = [] as any[];
+  const pages_skipped = [] as any[];
+
+  React.Children.forEach(children, child => {
     // @ts-ignore
-    const ref = useRef(null);
-    // @ts-ignore
+    const ref = useRef(null as HTMLElement);
     refs.push(ref);
+
+    const props = child && child.props || {} as any;
+    props_arr.push(props);
+
     // @ts-ignore
-    return React.cloneElement(child, { ref });
+    const clone = React.cloneElement(child, { ref });
+
+    (props.skip_snap) ? pages_skipped.push(clone) : pages_snapped.push(clone);
   });
 
 
   function on_scroll(animations: Animation[]) {
-    const scroll = root.current.scrollTop / (root.current.scrollHeight - root.current.offsetHeight) * (count - 1);
+    const scroll = root.current.scrollTop / (root.current.scrollHeight - root.current.clientHeight);
 
-    animations.forEach((a, idx) => {
-      let progress = scroll - Math.max(0, idx - 1);
-      progress = Math.max(0, Math.min(progress, 2));
-      a.currentTime = progress * 1000;
+    console.log({
+      scrollTop: root.current.scrollTop,
+      scrollHeight: root.current.scrollHeight,
+      offsetHeight: root.current.offsetHeight
+    })
+
+    animations.forEach(a => {
+      a.currentTime = scroll * 10000;
     });
+    console.log(scroll)
   };
 
   useEffect(() => {
@@ -49,19 +77,16 @@ export const SnapY: SnapY = ({ children, keyframes = [] }) => {
     root.current.addEventListener('scroll', callback, { passive: true });
 
     refs.forEach((r, idx) => {
-      // @ts-ignore
-      r.current.style.scrollSnapAlign = 'start';
-
-      if (idx >= keyframes.length) {
-        return;
+      const skip_snap = props_arr[idx].skip_snap;
+      if (!skip_snap) {
+        // @ts-ignore
+        r.current.style.scrollSnapAlign = 'start';
       }
 
-      let from = Math.max(idx - 1, 0);
-      let to = Math.min(idx + 2, count);
-      let frames = keyframes.slice(from, to);
-      let duration = (frames.length - 1) * 1000;
+      const frames = props_arr[idx].frames || [];
+      console.log(frames);
       let animation = r.current.animate(
-        frames, { iterations: 1, fill: 'both', duration }
+        frames, { iterations: 1, fill: 'both', duration: 10000 }
       );
       animation.pause();
       animations.push(animation);
@@ -70,7 +95,10 @@ export const SnapY: SnapY = ({ children, keyframes = [] }) => {
     return () => root.current.removeEventListener('scroll', callback);
   }, []);
 
-  return <div ref={root} className={styles.snap_y}>
-    {pages}
+  return <div className={styles.wrapper}>
+    <div ref={root} className={styles.snap_y}>
+      {pages_snapped}
+    </div>
+    {pages_skipped}
   </div>
 }
